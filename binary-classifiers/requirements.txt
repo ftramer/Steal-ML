@@ -1,0 +1,5 @@
+matplotlib == 1.4.3
+boto3 == 1.1.3
+numpy == 1.9.2
+scikit_learn == 0.16.1
+scipy == 0.16.0

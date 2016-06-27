@@ -1,0 +1,46 @@
+#
+#
+# create logistic regression from dataset
+#
+#
+
+curl "https://bigml.io/logisticregression?$BIGML_AUTH" \
+     -X POST \
+     -H 'content-type: application/json' \
+     -d '{"dataset": "dataset/5656cde055b0c80b6f00037e"}' 
+
+
+
+
+#
+#
+# Retrieve logistic regression model
+#
+#
+
+curl "https://bigml.io/logisticregression/5667fd4e9ed2332f8303029a?$BIGML_AUTH"
+
+
+
+#
+#
+# Make a prediction on a logistic regression model
+#
+#
+
+curl "https://bigml.io/prediction?$BIGML_AUTH" \
+     -X POST \
+     -H 'content-type: application/json' \
+     -d '{"model": "logisticregression/5667f7d49ed2332f83030279", "input_data": {"000006": "1<=X<4", "000007": 1, "000004": 1, "000005": "<100", "000002": "existing paid", "000003": "radio/tv", "000000": "no checking", "000001": 1, "000012": "none", "000008": "male single", "000009": "none", "00000f": 1, "000013": "yes", "00000d": "none", "00000e": "own", "00000b": "car", "00000c": 1, "00000a": 1, "000011": 1, "000010": "skilled"}}'
+     
+
+#
+#
+# Make an empty prediction on a logistic regression model (not working)
+#
+#
+
+curl "https://bigml.io/prediction?$BIGML_AUTH" \
+     -X POST \
+     -H 'content-type: application/json' \
+     -d '{"model": "logisticregression/5667f7d49ed2332f83030279", "input_data": {}}'

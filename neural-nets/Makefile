@@ -1,0 +1,180 @@
+SHELL := /bin/bash
+
+TOY_DATA=moons circles blobs iris class5
+REAL_DATA=adult_b adult steak gss digits cancer mushrooms diabetes
+
+EXP_DIR=experiments
+
+REPS=1
+
+BUDGETS=0.5 1.0 2.0 5.0 10.0 20.0 50.0 100.0
+
+HEADER='dataset,method,budget,mode,loss,loss_u,probas,probas_u,model l1'
+
+
+%train.out:
+	python -m nnets $(DATA) $(HIDDEN) "train" 0 --num_passes 1000 >> $@
+
+%extr.out:
+	python -m nnets $(DATA) $(HIDDEN) "extract" $(BUDGET) --seed $(SEED) $(OPTIONS) >> $@
+
+%base.out:
+	python -m nnets $(DATA) $(HIDDEN) "baseline" $(BUDGET) --seed $(SEED) $(OPTIONS) --epsilon 1e-3 >> $@
+
+%base_adapt.out:
+	python -m nnets $(DATA) $(HIDDEN) "baseline" $(BUDGET) --seed $(SEED) --adaptive_oracle --epsilon 1e-3 $(OPTIONS) >> $@
+
+%base_adapt_local.out:
+	python -m nnets $(DATA) $(HIDDEN) "baseline" $(BUDGET) --seed $(SEED) --steps $(BUDGETS) --epsilon 1e-3 $(OPTIONS) >> $@
+
+train:
+	for data in $(DATASETS) ; do \
+		mkdir -p $(EXP_DIR)/$$data/plots ; \
+		mkdir -p $(EXP_DIR)/$$data/models ; \
+		$(MAKE) DATA=$$data HIDDEN=$(HIDDEN) $(EXP_DIR)/$$data/models/train.out ; \
+	done
+
+extract:
+	for data in $(DATASETS) ; do \
+		for budget in $(BUDGETS) ; do \
+			number=1 ; while [[ $$number -le $(REPS) ]] ; do \
+				$(MAKE) DATA=$$data HIDDEN=$(HIDDEN) BUDGET=$$budget SEED=$$number $(EXP_DIR)/$$data/models/"$$budget"_$$number.extr.out ; \
+				((number = number + 1)) ; \
+			done \
+		done \
+	done
+
+baseline:
+	for data in $(DATASETS) ; do \
+		for budget in $(BUDGETS) ; do \
+			number=1 ; while [[ $$number -le $(REPS) ]] ; do \
+				$(MAKE) DATA=$$data HIDDEN=$(HIDDEN) BUDGET=$$budget SEED=$$number $(EXP_DIR)/$$data/models/"$$budget"_$$number.base.out ; \
+				((number = number + 1)) ; \
+			done \
+		done \
+	done
+
+baseline_adapt:
+	for data in $(DATASETS) ; do \
+		for budget in $(BUDGETS) ; do \
+			number=1 ; while [[ $$number -le $(REPS) ]] ; do \
+				$(MAKE) DATA=$$data HIDDEN=$(HIDDEN) BUDGET=$$budget SEED=$$number $(EXP_DIR)/$$data/models/"$$budget"_$$number.base_adapt.out ; \
+				((number = number + 1)) ; \
+			done \
+		done \
+	done
+
+baseline_adapt_local:
+	for data in $(DATASETS) ; do \
+		number=1 ; while [[ $$number -le $(REPS) ]] ; do \
+			$(MAKE) DATA=$$data HIDDEN=$(HIDDEN) BUDGET="100.0" SEED=$$number $(EXP_DIR)/$$data/models/100.0_$$number.base_adapt_local.out ; \
+			((number = number + 1)) ; \
+		done \
+	done
+
+compare:
+	for data in $(DATASETS) ; do \
+		echo $(HEADER) > $(EXP_DIR)/$$data/results.txt ;\
+		python -m nnets $$data $(HIDDEN) "compare" 0 >> $(EXP_DIR)/$$data/results.txt ;\
+	done
+
+clean:
+	for data in $(DATASETS) ; do \
+		rm -rf $(EXP_DIR)/$$data ; \
+	done
+
+clean_extr:
+	for data in $(DATASETS) ; do \
+		rm -f $(EXP_DIR)/$$data/models/*.extr.out ; \
+		rm -f $(EXP_DIR)/$$data/models/*extr*.pkl ; \
+		rm -f $(EXP_DIR)/$$data/plots/*extr*.png ; \
+	done
+
+clean_baseline:
+	for data in $(DATASETS) ; do \
+		rm -f $(EXP_DIR)/$$data/models/*.base.out ; \
+		rm -f $(EXP_DIR)/$$data/models/passive_base*.pkl ; \
+		rm -f $(EXP_DIR)/$$data/plots/passive_base*.png ; \
+	done
+
+clean_baseline_adapt:
+	for data in $(DATASETS) ; do \
+		rm -f $(EXP_DIR)/$$data/models/*.base_adapt.out ; \
+		rm -f $(EXP_DIR)/$$data/models/adapt-oracle_base*.pkl ; \
+		rm -f $(EXP_DIR)/$$data/plots/adapt-oracle_base*.png ; \
+	done
+
+clean_baseline_adapt_local:
+	for data in $(DATASETS) ; do \
+		rm -f $(EXP_DIR)/$$data/models/*.base_adapt_local.out ; \
+		rm -f $(EXP_DIR)/$$data/models/adapt-local_base*.pkl ; \
+		rm -f $(EXP_DIR)/$$data/plots/adapt-local_base*.png ; \
+	done
+
+
+toy_train:
+	$(MAKE) DATASETS="$(TOY_DATA)" HIDDEN=20 train
+
+toy_extract:
+	$(MAKE) DATASETS="$(TOY_DATA)" BUDGETS="$(BUDGETS)" HIDDEN=20 extract
+
+toy_baseline:
+	$(MAKE) DATASETS="$(TOY_DATA)" BUDGETS="$(BUDGETS)" HIDDEN=20 baseline
+
+toy_baseline_adapt:
+	$(MAKE) DATASETS="$(TOY_DATA)" BUDGETS="$(BUDGETS)" HIDDEN=20 baseline_adapt
+
+toy_baseline_adapt_local:
+	$(MAKE) DATASETS="$(TOY_DATA)" BUDGETS="$(BUDGETS)" HIDDEN=20 baseline_adapt_local
+
+toy_compare:
+	$(MAKE) DATASETS="$(TOY_DATA)" BUDGETS="$(BUDGETS)" HIDDEN=20 compare
+
+toy_clean:
+	$(MAKE) DATASETS="$(TOY_DATA)" clean
+
+toy_clean_extr:
+	$(MAKE) DATASETS="$(TOY_DATA)" clean_extr
+
+toy_clean_baseline:
+	$(MAKE) DATASETS="$(TOY_DATA)" clean_baseline
+
+toy_clean_baseline_adapt:
+	$(MAKE) DATASETS="$(TOY_DATA)" clean_baseline_adapt
+
+toy_clean_baseline_adapt_local:
+	$(MAKE) DATASETS="$(TOY_DATA)" clean_baseline_adapt_local
+
+
+real_train:
+	$(MAKE) DATASETS="$(REAL_DATA)" HIDDEN=20 train
+
+real_extract:
+	$(MAKE) DATASETS="$(REAL_DATA)" BUDGETS="$(BUDGETS)" HIDDEN=20 OPTIONS="--num_passes 1000" extract
+
+real_baseline:
+	$(MAKE) DATASETS="$(REAL_DATA)" BUDGETS="$(BUDGETS)" HIDDEN=20 OPTIONS="--num_passes 1000" baseline
+
+real_baseline_adapt:
+	$(MAKE) DATASETS="$(REAL_DATA)" BUDGETS="$(BUDGETS)" HIDDEN=20 OPTIONS="--num_passes 1000" baseline_adapt
+
+real_baseline_adapt_local:
+	$(MAKE) DATASETS="$(REAL_DATA)" BUDGETS="$(BUDGETS)" HIDDEN=20 OPTIONS="--num_passes 1000" baseline_adapt_local
+
+real_compare:
+	$(MAKE) DATASETS="$(REAL_DATA)" BUDGETS="$(BUDGETS)" HIDDEN=20 compare
+
+real_clean:
+	$(MAKE) DATASETS="$(REAL_DATA)" clean
+
+real_clean_extr:
+	$(MAKE) DATASETS="$(REAL_DATA)" clean_extr
+
+real_clean_baseline:
+	$(MAKE) DATASETS="$(REAL_DATA)" clean_baseline
+
+real_clean_baseline_adapt:
+	$(MAKE) DATASETS="$(REAL_DATA)" clean_baseline_adapt
+
+real_clean_baseline_adapt_local:
+	$(MAKE) DATASETS="$(REAL_DATA)" clean_baseline_adapt_local
