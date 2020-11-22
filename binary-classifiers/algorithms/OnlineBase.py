@@ -106,9 +106,16 @@ class OnlineBase(object):
                 raise RunOutOfBudget
 
         if hasattr(self.clf1, 'predict'):
-            label = self.clf1.predict(x)
+            t = len(np.array(x).shape)
+            if t==1:
+                label = self.clf1.predict(np.array(x).reshape(1,-1))
+            else:
+                label = self.clf1.predict(np.array(x))
         else:
-            label = self.clf1(x)
+            if t==1:
+                label = self.clf1(np.array(x).reshape(1,-1))
+            else:
+                label = self.clf1(np.array(x))
 
         return label
 
