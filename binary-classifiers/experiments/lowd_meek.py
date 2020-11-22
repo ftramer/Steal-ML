@@ -26,7 +26,7 @@ class LordMeek(OnlineBase):
         elif -1 in self.y_test:
             self.NEG = -1
         else:
-            print 'Watch out for test file! Neither 0 nor 1 is included!'
+            print('Watch out for test file! Neither 0 nor 1 is included!')
 
     def find_starters(self):
         """
@@ -59,7 +59,7 @@ class LordMeek(OnlineBase):
         assert dim == len(x_n)
 
         last_p = -1
-        for i in xrange(0, dim):
+        for i in range(0, dim):
             # record the old value
             last_x_p_i = x_p[i]
             # change the value
@@ -131,7 +131,7 @@ class LordMeek(OnlineBase):
         u = np.zeros(len(x0))
         w = np.zeros(len(x0))  # target
         w[f] = w_f
-        for i in xrange(0, len(x0)):
+        for i in range(0, len(x0)):
             if i == f:
                 continue
             # unit vector along the ith dimension
@@ -157,20 +157,20 @@ class LordMeek(OnlineBase):
             t = 1 if np.inner(w, test_x) + b > 0 else self.NEG
             if t != test_y:
                 error_lrn += 1
-            if self.clf1.predict(test_x) != test_y:
+            if self.clf1.predict(np.array(test_x).reshape(1,-1)) != np.array(test_y).reshape(-1,1):
                 error_clf += 1
 
         pe_clf = 1 - error_clf/ len(self.y_test)
         pe_lrn = 1 - error_lrn/ len(self.y_test)
 
-        print 'L_test = %f' % max(pe_clf - pe_lrn, .0)
-        print 'L_unif = %f' % (0.0,)
+        print('L_test = %f' % max(pe_clf - pe_lrn, .0))
+        print('L_unif = %f' % (0.0,))
 
 
 if __name__ == '__main__':
 
-    X_train, y_train = load_svmlight_file('../targets/diabetes/test.scale', n_features=8)
-    X_test, y_test = load_svmlight_file('../targets/diabetes/test.scale', n_features=8)
+    X_train, y_train = load_svmlight_file('targets/targets/diabetes/test.scale', n_features=8)
+    X_test, y_test = load_svmlight_file('targets/targets/diabetes/test.scale', n_features=8)
     X_train = X_train.todense().tolist()
     X_test  = X_test.todense().tolist()
 
@@ -181,7 +181,7 @@ if __name__ == '__main__':
     deltas = (1, .1, .01, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7)
     for e in deltas:
         delta = 1.0 / 10000
-        print 'error bound=%f' % e
+        print('error bound=%f' % e)
         ex = LordMeek(clf, (X_test, y_test), error=e, delta=delta)
         ex.do()
-        print 'nq=%d' % (ex.get_n_query())
+        print('nq=%d' % (ex.get_n_query()))
